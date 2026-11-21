@@ -1,7 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#FFFFFF"
-        android:fillAlpha="0.95"
-        android:pathData="M34,30h40a6,6 0 0 1 6,6v36a6,6 0 0 1 -6,6h-40a6,6 0 0 1 -6,-6v-36a6,6 0 0 1 6,-6z M36,38h36v10h-36z M36,54h10v8h-10z M52,54h10v8h-10z M68,54h4v22h-4z M36,66h10v8h-10z M52,66h10v8h-10z"/>
+    <!-- corpo da calculadora, em vidro -->
+    <path
+        android:pathData="M43,30h22a7,7 0 0 1 7,7v34a7,7 0 0 1 -7,7h-22a7,7 0 0 1 -7,-7v-34a7,7 0 0 1 7,-7z"
+        android:fillColor="#FFFFFF" android:fillAlpha="0.20"
+        android:strokeColor="#FFFFFF" android:strokeWidth="4"
+        android:strokeLineJoin="round" android:strokeAlpha="0.97"/>
+    <!-- visor -->
+    <path
+        android:pathData="M44,38h20v9h-20z"
+        android:fillColor="#FFFFFF" android:fillAlpha="0.30"
+        android:strokeColor="#FFFFFF" android:strokeWidth="3.4"
+        android:strokeLineJoin="round" android:strokeAlpha="0.97"/>
+    <!-- teclas -->
+    <group>
+        <path android:pathData="M46,57m-3.1,0a3.1,3.1 0 1,0 6.2,0a3.1,3.1 0 1,0 -6.2,0" android:fillColor="#FFFFFF"/>
+        <path android:pathData="M55.5,57m-3.1,0a3.1,3.1 0 1,0 6.2,0a3.1,3.1 0 1,0 -6.2,0" android:fillColor="#FFFFFF"/>
+        <path android:pathData="M46,66.5m-3.1,0a3.1,3.1 0 1,0 6.2,0a3.1,3.1 0 1,0 -6.2,0" android:fillColor="#FFFFFF"/>
+        <path android:pathData="M55.5,66.5m-3.1,0a3.1,3.1 0 1,0 6.2,0a3.1,3.1 0 1,0 -6.2,0" android:fillColor="#FFFFFF"/>
+        <path android:pathData="M62.2,53.9h1.6a3.2,3.2 0 0 1 3.2,3.2v12.4a3.2,3.2 0 0 1 -3.2,3.2h-1.6a3.2,3.2 0 0 1 -3.2,-3.2v-12.4a3.2,3.2 0 0 1 3.2,-3.2z"
+            android:fillColor="#FFFFFF"/>
+    </group>
 </vector>
