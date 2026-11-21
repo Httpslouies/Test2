@@ -100,8 +100,9 @@ button:focus-visible,select:focus-visible,input:focus-visible,.chk:focus-visible
 
 /* grupos */
 .group{padding:14px 14px 10px}
-.ghead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-.ghead h2{font-family:var(--fd);font-size:.95rem;margin:0;flex:1;min-width:0}
+.ghead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.ghead .nome{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+.ghead h2{font-family:var(--fd);font-size:.95rem;margin:0;min-width:0;overflow-wrap:anywhere}
 .gtot{font-family:var(--fd);font-weight:700;font-variant-numeric:tabular-nums}
 .gsub{font-size:.72rem;color:var(--muted);width:100%}
 
@@ -118,8 +119,16 @@ li.item:first-child{border-top:0}
 .tag.last{color:var(--good);border-color:currentColor}
 .val{font-family:var(--fd);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .rowbtns{display:flex;gap:4px}
-.gfoot{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.gfoot{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap}
 .gfoot button{font-size:.8rem;padding:6px 10px}
+.btn-pagar{margin-left:auto;background:var(--good);border-color:transparent;color:#fff;font-weight:600}
+:root[data-theme="dark"] .btn-pagar{color:#06281c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn-pagar{color:#06281c}}
+.btn-pagar[disabled]{background:transparent;border:1px solid var(--good);color:var(--good);cursor:default}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  max-width:min(340px,86vw);padding:11px 16px;border-radius:14px;text-align:center;font-size:.85rem;font-weight:500;
+  background:var(--glass);border:1px solid var(--stroke);backdrop-filter:blur(22px) saturate(160%);
+  -webkit-backdrop-filter:blur(22px) saturate(160%);box-shadow:var(--shadow);z-index:20;transition:opacity .25s}
 .muted{color:var(--muted)}
 .empty{color:var(--muted);font-size:.85rem;padding:6px 0}
 
@@ -248,13 +257,16 @@ function render(){
           <button class="icon" data-act="apagar" aria-label="Apagar ${esc(i.nome)}">✕</button>
         </span></li>`}).join(""):`<li class="empty">Nenhum gasto nesta categoria ainda.</li>`;
     return `<section class="glass group" data-g="${g.id}">
-      <div class="ghead"><h2>${esc(g.nome)}</h2><span class="gtot">${brl(totalGrupo(g))}</span>
+      <div class="ghead">
+        <span class="nome"><h2>${esc(g.nome)}</h2>
+          <button class="icon" data-act="rename" title="Renomear categoria" aria-label="Renomear ${esc(g.nome)}">✎</button></span>
+        <span class="gtot">${brl(totalGrupo(g))}</span>
         <span class="gsub">${pagos} de ${g.itens.length} pagos</span></div>
       <ul>${itens}</ul>
       <div class="gfoot">
         <button data-act="add">＋ Gasto</button>
-        <button data-act="rename" class="muted">Renomear</button>
         <button data-act="delgrupo" class="muted">Excluir categoria</button>
+        <button data-act="pagartudo" class="btn-pagar"${g.itens.length&&pagos===g.itens.length?" disabled":""}>${g.itens.length&&pagos===g.itens.length?"✓ Pago":"Pagar"}</button>
       </div></section>`}).join("");
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -289,11 +301,30 @@ $("#grupos").addEventListener("click",async e=>{
   if(a==="pago"){it.pago=!it.pago}
   else if(a==="editar"){return abrirItem(g.id,it)}
   else if(a==="apagar"){g.itens=g.itens.filter(i=>i.id!==it.id)}
+  else if(a==="pagartudo"){g.itens.forEach(i=>i.pago=true)}
   else if(a==="add"){return abrirItem(g.id,null)}
   else if(a==="rename"){const n=await renomear(g.nome); if(n===null)return; g.nome=n||g.nome}
   else if(a==="delgrupo"){if(!await confirmar(`Excluir a categoria "${g.nome}" e tudo dentro dela?`))return; S.meses[S.atual].grupos=mes().grupos.filter(x=>x.id!==g.id)}
-  salvar();render();
+  salvar();render();fechamento();
 });
+
+/* fecha o mês sozinho quando tudo está pago; o mês antigo fica guardado como está */
+function toast(msg){
+  let t=document.getElementById("toast");
+  if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("role","status");document.body.appendChild(t)}
+  t.textContent=msg;t.style.opacity="1";
+  clearTimeout(toast._t);toast._t=setTimeout(()=>{t.style.opacity="0"},2600);
+}
+function fechamento(){
+  const m=mes(),itens=m.grupos.flatMap(g=>g.itens);
+  if(!itens.length)return;
+  if(itens.some(i=>!i.pago)){if(m.fechado){m.fechado=false;salvar()}return}
+  if(m.fechado)return;
+  m.fechado=true;salvar();
+  toast("Tudo pago em "+rotulo(S.atual)+" · abrindo o próximo mês");
+  setTimeout(proximoMes,1400);
+}
+
 /* confirm()/prompt() não funcionam no visualizador: usamos diálogos da própria página */
 function confirmar(msg){const el=document.createElement("dialog");el.innerHTML=`<form method="dialog" class="sheet glass"><p style="margin:0">${esc(msg)}</p><div class="acts"><button value="n">Cancelar</button><button value="s" class="btn-accent">Excluir</button></div></form>`;document.body.appendChild(el);el.showModal();return new Promise(r=>el.addEventListener("close",()=>{r(el.returnValue==="s");el.remove()}))}
 function renomear(atual){const el=document.createElement("dialog");el.innerHTML=`<form method="dialog" class="sheet glass"><div class="field"><label>Nome da categoria</label><input class="inp" id="rn" value="${esc(atual)}"></div><div class="acts"><button value="n">Cancelar</button><button value="s" class="btn-accent">Salvar</button></div></form>`;document.body.appendChild(el);el.showModal();el.querySelector("#rn").select();return new Promise(r=>el.addEventListener("close",()=>{r(el.returnValue==="s"?el.querySelector("#rn").value.trim():null);el.remove()}))}
@@ -309,7 +340,8 @@ $("#temaBtn").addEventListener("click",()=>{
 });
 try{const t=localStorage.getItem(KEY+"-tema"); if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}
 
-$("#novoMes").addEventListener("click",()=>{
+$("#novoMes").addEventListener("click",proximoMes);
+function proximoMes(){
   const [a,m]=S.atual.split("-").map(Number);
   const nm=m===12?1:m+1, na=m===12?a+1:a;
   const chave=`${na}-${String(nm).padStart(2,"0")}`;
@@ -319,7 +351,7 @@ $("#novoMes").addEventListener("click",()=>{
         cur:i.tot?(i.cur||0)+1:null,tot:i.tot||null,pago:false}))}))};
   }
   S.atual=chave;salvar();render();
-});
+}
 render();
 </script>
 </body>
