@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px system-ui,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Contas do Mês</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: coluna única, cabeçalho fixo com o saldo, grupos em cartões de vidro empilhados */
+:root{
+  --bg:#eef1f7;
+  --glow-a:#8ea8ff;
+  --glow-b:#f3b7d4;
+  --glow-c:#9fe6d8;
+  --glass:rgba(255,255,255,.55);
+  --glass-2:rgba(255,255,255,.34);
+  --stroke:rgba(14,22,48,.12);
+  --stroke-soft:rgba(14,22,48,.07);
+  --fg:#15203c;
+  --muted:#5b6684;
+  --accent:#4659d6;
+  --good:#0f7a52;
+  --bad:#c23a52;
+  --shadow:0 18px 40px -22px rgba(14,22,48,.45);
+  --r:20px;
+  --ff:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --fd:"Space Grotesk","Inter",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b0f1c; --glow-a:#3a4ba8; --glow-b:#7a3560; --glow-c:#1f6b63;
+  --glass:rgba(146,163,210,.13); --glass-2:rgba(146,163,210,.08);
+  --stroke:rgba(190,205,255,.18); --stroke-soft:rgba(190,205,255,.10);
+  --fg:#e8ecf8; --muted:#9aa6c6; --accent:#8ea0ff; --good:#4fd3a0; --bad:#ff8098;
+  --shadow:0 20px 44px -24px rgba(0,0,0,.8);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0b0f1c; --glow-a:#3a4ba8; --glow-b:#7a3560; --glow-c:#1f6b63;
+  --glass:rgba(146,163,210,.13); --glass-2:rgba(146,163,210,.08);
+  --stroke:rgba(190,205,255,.18); --stroke-soft:rgba(190,205,255,.10);
+  --fg:#e8ecf8; --muted:#9aa6c6; --accent:#8ea0ff; --good:#4fd3a0; --bad:#ff8098;
+  --shadow:0 20px 44px -24px rgba(0,0,0,.8);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--ff);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body::after{content:"";position:fixed;inset:-20% -10%;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(42vmax 42vmax at 12% 8%,var(--glow-a) 0,transparent 62%),
+    radial-gradient(38vmax 38vmax at 88% 18%,var(--glow-b) 0,transparent 60%),
+    radial-gradient(44vmax 44vmax at 50% 96%,var(--glow-c) 0,transparent 62%);
+  opacity:.55;filter:blur(18px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body::after{opacity:.5}}
+:root[data-theme="dark"] body::after{opacity:.5}
+
+.wrap{max-width:720px;margin:0 auto;padding-block:18px 64px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:16px}
+
+.glass{background:var(--glass);border:1px solid var(--stroke);border-radius:var(--r);
+  backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);
+  box-shadow:var(--shadow)}
+
+h1{font-family:var(--fd);font-size:1.05rem;letter-spacing:.02em;margin:0;text-wrap:balance}
+.eyebrow{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+/* topo */
+.top{padding:16px;display:flex;flex-direction:column;gap:14px}
+.toprow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.toprow .grow{flex:1;min-width:0}
+select,input,button{font:inherit;color:inherit}
+select,.inp{background:var(--glass-2);border:1px solid var(--stroke-soft);border-radius:12px;padding:8px 10px;min-width:0}
+.inp{width:100%}
+button{cursor:pointer;background:var(--glass-2);border:1px solid var(--stroke-soft);border-radius:12px;padding:8px 12px;transition:.15s}
+button:hover{background:var(--glass)}
+button:focus-visible,select:focus-visible,input:focus-visible,.chk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-accent{background:var(--accent);color:#fff;border-color:transparent;font-weight:600}
+:root[data-theme="dark"] .btn-accent{color:#0b0f1c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn-accent{color:#0b0f1c}}
+.icon{padding:6px 9px;font-size:.85rem;line-height:1}
+
+.saldo{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.tile{background:var(--glass-2);border:1px solid var(--stroke-soft);border-radius:14px;padding:10px 12px}
+.tile .k{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.tile .v{font-family:var(--fd);font-size:1.18rem;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.tile.wide{grid-column:1/-1}
+.v.pos{color:var(--good)} .v.neg{color:var(--bad)}
+.salline{display:flex;align-items:center;gap:8px}
+.salline input{flex:1;background:transparent;border:0;padding:0;font-family:var(--fd);font-size:1.18rem;font-weight:700;font-variant-numeric:tabular-nums;width:100%}
+.bar{height:7px;border-radius:99px;background:var(--stroke-soft);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+
+/* grupos */
+.group{padding:14px 14px 10px}
+.ghead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.ghead h2{font-family:var(--fd);font-size:.95rem;margin:0;flex:1;min-width:0}
+.gtot{font-family:var(--fd);font-weight:700;font-variant-numeric:tabular-nums}
+.gsub{font-size:.72rem;color:var(--muted);width:100%}
+
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+li.item{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--stroke-soft)}
+li.item:first-child{border-top:0}
+.chk{width:21px;height:21px;flex:none;border-radius:7px;border:1.5px solid var(--stroke);background:var(--glass-2);display:grid;place-items:center;font-size:.72rem;color:transparent;padding:0}
+.chk[aria-pressed="true"]{background:var(--good);border-color:transparent;color:#fff}
+.nm{flex:1;min-width:0}
+.nm .t{display:block;overflow-wrap:anywhere}
+.paid .t{opacity:.5;text-decoration:line-through}
+.tag{display:inline-block;font-size:.66rem;font-weight:600;letter-spacing:.04em;color:var(--muted);
+  background:var(--glass-2);border:1px solid var(--stroke-soft);border-radius:99px;padding:1px 7px;margin-top:2px}
+.tag.last{color:var(--good);border-color:currentColor}
+.val{font-family:var(--fd);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rowbtns{display:flex;gap:4px}
+.gfoot{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.gfoot button{font-size:.8rem;padding:6px 10px}
+.muted{color:var(--muted)}
+.empty{color:var(--muted);font-size:.85rem;padding:6px 0}
+
+/* modal */
+dialog{border:0;padding:0;background:transparent;max-width:min(420px,92vw);width:100%;color:var(--fg)}
+dialog::backdrop{background:rgba(6,10,22,.45);backdrop-filter:blur(4px)}
+.sheet{padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--bg)}
+.sheet .glassy{background:var(--glass)}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.acts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.hint{font-size:.74rem;color:var(--muted)}
+footer{text-align:center;font-size:.72rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <section class="glass top">
+    <div class="toprow">
+      <select id="mesSel" class="grow" aria-label="Escolher mês"></select>
+      <button class="icon" id="novoMes" title="Criar próximo mês" aria-label="Criar próximo mês">＋ mês</button>
+      <button class="icon" id="temaBtn" title="Alternar tema" aria-label="Alternar tema">◐</button>
+    </div>
+
+    <div class="saldo">
+      <div class="tile">
+        <div class="k">Salário</div>
+        <div class="salline"><span class="v">R$</span><input id="salario" inputmode="decimal" aria-label="Salário do mês" placeholder="0,00"></div>
+      </div>
+      <div class="tile">
+        <div class="k">Total de despesas</div>
+        <div class="v" id="totalGeral">R$ 0,00</div>
+      </div>
+      <div class="tile wide">
+        <div class="k">Sobrou</div>
+        <div class="v" id="sobrou">R$ 0,00</div>
+        <div class="bar"><i id="barra" style="width:0%"></i></div>
+        <div class="hint" id="resumoPago">—</div>
+      </div>
+    </div>
+  </section>
+
+  <div id="grupos"></div>
+
+  <button class="glass" id="novoGrupo" style="padding:12px">＋ Nova categoria</button>
+
+  <footer>Os dados ficam salvos neste aparelho, no navegador.</footer>
+</div>
+
+<dialog id="dlg"><form method="dialog" class="sheet glass" id="form">
+  <h2 style="margin:0;font-family:var(--fd);font-size:1rem" id="dlgTitulo">Novo gasto</h2>
+  <div class="field"><label for="f_nome">Descrição</label><input class="inp" id="f_nome" required></div>
+  <div class="field"><label for="f_valor">Valor da parcela deste mês (R$)</label><input class="inp" id="f_valor" inputmode="decimal" required placeholder="0,00"></div>
+  <div class="two">
+    <div class="field"><label for="f_cur">Parcela atual</label><input class="inp" id="f_cur" inputmode="numeric" placeholder="—"></div>
+    <div class="field"><label for="f_tot">De quantas</label><input class="inp" id="f_tot" inputmode="numeric" placeholder="—"></div>
+  </div>
+  <div class="hint">Deixe as parcelas em branco para gastos sem parcelamento. Ao criar o próximo mês, cada parcela avança sozinha e as que terminaram saem da lista.</div>
+  <div class="acts">
+    <button value="cancel" type="submit" formnovalidate>Cancelar</button>
+    <button value="ok" class="btn-accent" id="okBtn">Salvar</button>
+  </div>
+</form></dialog>
+
+<script>
+"use strict";
+const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const KEY="contas-do-mes-v1";
+const brl=n=>"R$ "+(Number(n)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const num=s=>{if(typeof s==="number")return s;s=String(s||"").replace(/[^\d,.-]/g,"");if(s.includes(",")) s=s.replace(/\./g,"").replace(",",".");return parseFloat(s)||0};
+const uid=()=>Math.random().toString(36).slice(2,9);
+const rotulo=k=>{const[a,m]=k.split("-");return MESES[+m-1]+" / "+a};
+
+function semente(){
+  const g=(nome,itens)=>({id:uid(),nome,itens:itens.map(i=>({id:uid(),nome:i[0],valor:i[1],cur:i[2]??null,tot:i[3]??null,pago:false}))});
+  return {atual:"2025-09",meses:{"2025-09":{salario:0,grupos:[
+    g("Despesas fixas",[["Aluguel",650],["Internet",129],["Claro",39.92],["Carro",254.45]]),
+    g("Cartão 01",[["Fatura",1036.09]]),
+    g("Cartão 02",[["S25",282.13,12,12],["Edição",154.83,8,12],["Colchão",100,2,12],["Monitor",53.26,5,15],
+      ["Fonte",33.11,13,18],["Oficial F",32.91,5,5],["Shein A",11.07,5,6],["Shein B",26.12,6,6],
+      ["Escova",24.36,5,8],["Farmácia",100],["iFood",100]])
+  ]}}};
+}
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))||semente()}catch(e){S=semente()}
+if(!S||!S.meses||!S.meses[S.atual])S=semente();
+const salvar=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const mes=()=>S.meses[S.atual];
+
+/* ---- cálculos ---- */
+function totais(){
+  let total=0,pago=0;
+  for(const g of mes().grupos) for(const i of g.itens){total+=i.valor; if(i.pago)pago+=i.valor;}
+  return {total,pago,falta:total-pago,sobrou:(mes().salario||0)-total};
+}
+function totalGrupo(g){return g.itens.reduce((a,i)=>a+i.valor,0)}
+
+/* ---- render ---- */
+const $=s=>document.querySelector(s);
+function render(){
+  const sel=$("#mesSel");
+  sel.innerHTML=Object.keys(S.meses).sort().map(k=>`<option value="${k}"${k===S.atual?" selected":""}>${rotulo(k)}</option>`).join("");
+  if(document.activeElement!==$("#salario")) $("#salario").value=mes().salario?mes().salario.toLocaleString("pt-BR",{minimumFractionDigits:2}):"";
+
+  const t=totais();
+  $("#totalGeral").textContent=brl(t.total);
+  const sb=$("#sobrou"); sb.textContent=brl(t.sobrou);
+  sb.className="v "+(t.sobrou<0?"neg":(mes().salario?"pos":""));
+  $("#barra").style.width=(t.total?Math.min(100,t.pago/t.total*100):0)+"%";
+  $("#resumoPago").textContent=`Pago ${brl(t.pago)} · ainda falta ${brl(t.falta)}`;
+
+  $("#grupos").innerHTML=mes().grupos.map(g=>{
+    const pagos=g.itens.filter(i=>i.pago).length;
+    const itens=g.itens.length?g.itens.map(i=>{
+      const ult=i.tot&&i.cur>=i.tot;
+      const tag=i.tot?`<span class="tag${ult?" last":""}">${i.cur||"?"} de ${i.tot}${ult?" · última":""}</span>`:"";
+      return `<li class="item${i.pago?" paid":""}" data-g="${g.id}" data-i="${i.id}">
+        <button class="chk" data-act="pago" aria-pressed="${i.pago}" aria-label="Marcar ${i.nome} como pago">✓</button>
+        <span class="nm"><span class="t">${esc(i.nome)}</span>${tag}</span>
+        <span class="val">${brl(i.valor)}</span>
+        <span class="rowbtns">
+          <button class="icon" data-act="editar" aria-label="Editar ${esc(i.nome)}">✎</button>
+          <button class="icon" data-act="apagar" aria-label="Apagar ${esc(i.nome)}">✕</button>
+        </span></li>`}).join(""):`<li class="empty">Nenhum gasto nesta categoria ainda.</li>`;
+    return `<section class="glass group" data-g="${g.id}">
+      <div class="ghead"><h2>${esc(g.nome)}</h2><span class="gtot">${brl(totalGrupo(g))}</span>
+        <span class="gsub">${pagos} de ${g.itens.length} pagos</span></div>
+      <ul>${itens}</ul>
+      <div class="gfoot">
+        <button data-act="add">＋ Gasto</button>
+        <button data-act="rename" class="muted">Renomear</button>
+        <button data-act="delgrupo" class="muted">Excluir categoria</button>
+      </div></section>`}).join("");
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---- modal ---- */
+let alvo=null;
+function abrirItem(gid,item){
+  alvo={gid,id:item?item.id:null};
+  $("#dlgTitulo").textContent=item?"Editar gasto":"Novo gasto";
+  $("#f_nome").value=item?item.nome:"";
+  $("#f_valor").value=item?String(item.valor).replace(".",","):"";
+  $("#f_cur").value=item&&item.cur?item.cur:"";
+  $("#f_tot").value=item&&item.tot?item.tot:"";
+  $("#dlg").showModal(); $("#f_nome").focus();
+}
+$("#form").addEventListener("submit",e=>{
+  if(e.submitter&&e.submitter.value==="cancel")return;
+  const g=mes().grupos.find(x=>x.id===alvo.gid); if(!g)return;
+  const dados={nome:$("#f_nome").value.trim()||"Sem nome",valor:num($("#f_valor").value),
+    cur:parseInt($("#f_cur").value)||null,tot:parseInt($("#f_tot").value)||null};
+  if(alvo.id)Object.assign(g.itens.find(i=>i.id===alvo.id),dados);
+  else g.itens.push({id:uid(),pago:false,...dados});
+  salvar();render();
+});
+
+/* ---- eventos ---- */
+$("#grupos").addEventListener("click",async e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  const sec=b.closest("section.group"), g=mes().grupos.find(x=>x.id===sec.dataset.g);
+  const li=b.closest("li.item"), it=li?g.itens.find(i=>i.id===li.dataset.i):null;
+  const a=b.dataset.act;
+  if(a==="pago"){it.pago=!it.pago}
+  else if(a==="editar"){return abrirItem(g.id,it)}
+  else if(a==="apagar"){g.itens=g.itens.filter(i=>i.id!==it.id)}
+  else if(a==="add"){return abrirItem(g.id,null)}
+  else if(a==="rename"){const n=await renomear(g.nome); if(n===null)return; g.nome=n||g.nome}
+  else if(a==="delgrupo"){if(!await confirmar(`Excluir a categoria "${g.nome}" e tudo dentro dela?`))return; S.meses[S.atual].grupos=mes().grupos.filter(x=>x.id!==g.id)}
+  salvar();render();
+});
+/* confirm()/prompt() não funcionam no visualizador: usamos diálogos da própria página */
+function confirmar(msg){const el=document.createElement("dialog");el.innerHTML=`<form method="dialog" class="sheet glass"><p style="margin:0">${esc(msg)}</p><div class="acts"><button value="n">Cancelar</button><button value="s" class="btn-accent">Excluir</button></div></form>`;document.body.appendChild(el);el.showModal();return new Promise(r=>el.addEventListener("close",()=>{r(el.returnValue==="s");el.remove()}))}
+function renomear(atual){const el=document.createElement("dialog");el.innerHTML=`<form method="dialog" class="sheet glass"><div class="field"><label>Nome da categoria</label><input class="inp" id="rn" value="${esc(atual)}"></div><div class="acts"><button value="n">Cancelar</button><button value="s" class="btn-accent">Salvar</button></div></form>`;document.body.appendChild(el);el.showModal();el.querySelector("#rn").select();return new Promise(r=>el.addEventListener("close",()=>{r(el.returnValue==="s"?el.querySelector("#rn").value.trim():null);el.remove()}))}
+
+$("#salario").addEventListener("input",e=>{mes().salario=num(e.target.value);salvar();render()});
+$("#mesSel").addEventListener("change",e=>{S.atual=e.target.value;salvar();render()});
+$("#novoGrupo").addEventListener("click",async()=>{const n=await renomear("Nova categoria");if(n===null)return;mes().grupos.push({id:uid(),nome:n||"Nova categoria",itens:[]});salvar();render()});
+$("#temaBtn").addEventListener("click",()=>{
+  const r=document.documentElement, escuro=matchMedia("(prefers-color-scheme: dark)").matches;
+  const atual=r.getAttribute("data-theme")||(escuro?"dark":"light");
+  r.setAttribute("data-theme",atual==="dark"?"light":"dark");
+  try{localStorage.setItem(KEY+"-tema",r.getAttribute("data-theme"))}catch(e){}
+});
+try{const t=localStorage.getItem(KEY+"-tema"); if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}
+
+$("#novoMes").addEventListener("click",()=>{
+  const [a,m]=S.atual.split("-").map(Number);
+  const nm=m===12?1:m+1, na=m===12?a+1:a;
+  const chave=`${na}-${String(nm).padStart(2,"0")}`;
+  if(!S.meses[chave]){
+    S.meses[chave]={salario:mes().salario,grupos:mes().grupos.map(g=>({id:uid(),nome:g.nome,
+      itens:g.itens.filter(i=>!(i.tot&&i.cur>=i.tot)).map(i=>({id:uid(),nome:i.nome,valor:i.valor,
+        cur:i.tot?(i.cur||0)+1:null,tot:i.tot||null,pago:false}))}))};
+  }
+  S.atual=chave;salvar();render();
+});
+render();
+</script>
+</body>
+</html>
