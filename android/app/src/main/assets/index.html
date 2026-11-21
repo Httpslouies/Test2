@@ -210,6 +210,7 @@ const brl=n=>"R$ "+(Number(n)||0).toLocaleString("pt-BR",{minimumFractionDigits:
 const num=s=>{if(typeof s==="number")return s;s=String(s||"").replace(/[^\d,.-]/g,"");if(s.includes(",")) s=s.replace(/\./g,"").replace(",",".");return parseFloat(s)||0};
 const uid=()=>Math.random().toString(36).slice(2,9);
 const rotulo=k=>{const[a,m]=k.split("-");return MESES[+m-1]+" / "+a};
+const rotuloCurto=k=>{const[a,m]=k.split("-");return MESES[+m-1].slice(0,3)+" / "+a};
 
 function semente(){
   const g=(nome,itens)=>({id:uid(),nome,itens:itens.map(i=>({id:uid(),nome:i[0],valor:i[1],cur:i[2]??null,tot:i[3]??null,pago:false}))});
@@ -239,7 +240,7 @@ function totalGrupo(g){return g.itens.reduce((a,i)=>a+i.valor,0)}
 const $=s=>document.querySelector(s);
 function render(){
   const sel=$("#mesSel");
-  sel.innerHTML=Object.keys(S.meses).sort().map(k=>`<option value="${k}"${k===S.atual?" selected":""}>${rotulo(k)}</option>`).join("");
+  sel.innerHTML=Object.keys(S.meses).sort().map(k=>`<option value="${k}"${k===S.atual?" selected":""}>${rotuloCurto(k)}</option>`).join("");
   $("#mesAnterior").disabled=!S.meses[chaveAnterior()];
   if(document.activeElement!==$("#salario")) $("#salario").value=mes().salario?mes().salario.toLocaleString("pt-BR",{minimumFractionDigits:2}):"";
 
