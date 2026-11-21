@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>
-:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px)}
+html{background:var(--bg,#0b0f1c)}
 body{margin:0;font:14px system-ui,sans-serif}
 img{max-width:100%}
 [hidden]{display:none!important}
@@ -81,6 +84,8 @@ select,.inp{background:var(--glass-2);border:1px solid var(--stroke-soft);border
 .inp{width:100%}
 button{cursor:pointer;background:var(--glass-2);border:1px solid var(--stroke-soft);border-radius:12px;padding:8px 12px;transition:.15s}
 button:hover{background:var(--glass)}
+button[disabled]{opacity:.38;cursor:default}
+button[disabled]:hover{background:var(--glass-2)}
 button:focus-visible,select:focus-visible,input:focus-visible,.chk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .btn-accent{background:var(--accent);color:#fff;border-color:transparent;font-weight:600}
 :root[data-theme="dark"] .btn-accent{color:#0b0f1c}
@@ -100,8 +105,9 @@ button:focus-visible,select:focus-visible,input:focus-visible,.chk:focus-visible
 
 /* grupos */
 .group{padding:14px 14px 10px}
-.ghead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-.ghead h2{font-family:var(--fd);font-size:.95rem;margin:0;flex:1;min-width:0}
+.ghead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.ghead .nome{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+.ghead h2{font-family:var(--fd);font-size:.95rem;margin:0;min-width:0;overflow-wrap:anywhere}
 .gtot{font-family:var(--fd);font-weight:700;font-variant-numeric:tabular-nums}
 .gsub{font-size:.72rem;color:var(--muted);width:100%}
 
@@ -118,8 +124,16 @@ li.item:first-child{border-top:0}
 .tag.last{color:var(--good);border-color:currentColor}
 .val{font-family:var(--fd);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .rowbtns{display:flex;gap:4px}
-.gfoot{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.gfoot{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap}
 .gfoot button{font-size:.8rem;padding:6px 10px}
+.btn-pagar{margin-left:auto;background:var(--good);border-color:transparent;color:#fff;font-weight:600}
+:root[data-theme="dark"] .btn-pagar{color:#06281c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn-pagar{color:#06281c}}
+.btn-pagar[disabled]{background:transparent;border:1px solid var(--good);color:var(--good);cursor:default}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  max-width:min(340px,86vw);padding:11px 16px;border-radius:14px;text-align:center;font-size:.85rem;font-weight:500;
+  background:var(--glass);border:1px solid var(--stroke);backdrop-filter:blur(22px) saturate(160%);
+  -webkit-backdrop-filter:blur(22px) saturate(160%);box-shadow:var(--shadow);z-index:20;transition:opacity .25s}
 .muted{color:var(--muted)}
 .empty{color:var(--muted);font-size:.85rem;padding:6px 0}
 
@@ -142,6 +156,7 @@ footer{text-align:center;font-size:.72rem;color:var(--muted)}
 <div class="wrap">
   <section class="glass top">
     <div class="toprow">
+      <button class="icon" id="mesAnterior" title="Voltar ao mês anterior" aria-label="Voltar ao mês anterior">− mês</button>
       <select id="mesSel" class="grow" aria-label="Escolher mês"></select>
       <button class="icon" id="novoMes" title="Criar próximo mês" aria-label="Criar próximo mês">＋ mês</button>
       <button class="icon" id="temaBtn" title="Alternar tema" aria-label="Alternar tema">◐</button>
@@ -195,6 +210,7 @@ const brl=n=>"R$ "+(Number(n)||0).toLocaleString("pt-BR",{minimumFractionDigits:
 const num=s=>{if(typeof s==="number")return s;s=String(s||"").replace(/[^\d,.-]/g,"");if(s.includes(",")) s=s.replace(/\./g,"").replace(",",".");return parseFloat(s)||0};
 const uid=()=>Math.random().toString(36).slice(2,9);
 const rotulo=k=>{const[a,m]=k.split("-");return MESES[+m-1]+" / "+a};
+const rotuloCurto=k=>{const[a,m]=k.split("-");return MESES[+m-1].slice(0,3)+" / "+a};
 
 function semente(){
   const g=(nome,itens)=>({id:uid(),nome,itens:itens.map(i=>({id:uid(),nome:i[0],valor:i[1],cur:i[2]??null,tot:i[3]??null,pago:false}))});
@@ -224,7 +240,8 @@ function totalGrupo(g){return g.itens.reduce((a,i)=>a+i.valor,0)}
 const $=s=>document.querySelector(s);
 function render(){
   const sel=$("#mesSel");
-  sel.innerHTML=Object.keys(S.meses).sort().map(k=>`<option value="${k}"${k===S.atual?" selected":""}>${rotulo(k)}</option>`).join("");
+  sel.innerHTML=Object.keys(S.meses).sort().map(k=>`<option value="${k}"${k===S.atual?" selected":""}>${rotuloCurto(k)}</option>`).join("");
+  $("#mesAnterior").disabled=!S.meses[chaveAnterior()];
   if(document.activeElement!==$("#salario")) $("#salario").value=mes().salario?mes().salario.toLocaleString("pt-BR",{minimumFractionDigits:2}):"";
 
   const t=totais();
@@ -248,13 +265,16 @@ function render(){
           <button class="icon" data-act="apagar" aria-label="Apagar ${esc(i.nome)}">✕</button>
         </span></li>`}).join(""):`<li class="empty">Nenhum gasto nesta categoria ainda.</li>`;
     return `<section class="glass group" data-g="${g.id}">
-      <div class="ghead"><h2>${esc(g.nome)}</h2><span class="gtot">${brl(totalGrupo(g))}</span>
+      <div class="ghead">
+        <span class="nome"><h2>${esc(g.nome)}</h2>
+          <button class="icon" data-act="rename" title="Renomear categoria" aria-label="Renomear ${esc(g.nome)}">✎</button></span>
+        <span class="gtot">${brl(totalGrupo(g))}</span>
         <span class="gsub">${pagos} de ${g.itens.length} pagos</span></div>
       <ul>${itens}</ul>
       <div class="gfoot">
         <button data-act="add">＋ Gasto</button>
-        <button data-act="rename" class="muted">Renomear</button>
         <button data-act="delgrupo" class="muted">Excluir categoria</button>
+        <button data-act="pagartudo" class="btn-pagar"${g.itens.length&&pagos===g.itens.length?" disabled":""}>${g.itens.length&&pagos===g.itens.length?"✓ Pago":"Pagar"}</button>
       </div></section>`}).join("");
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -289,17 +309,46 @@ $("#grupos").addEventListener("click",async e=>{
   if(a==="pago"){it.pago=!it.pago}
   else if(a==="editar"){return abrirItem(g.id,it)}
   else if(a==="apagar"){g.itens=g.itens.filter(i=>i.id!==it.id)}
+  else if(a==="pagartudo"){g.itens.forEach(i=>i.pago=true)}
   else if(a==="add"){return abrirItem(g.id,null)}
   else if(a==="rename"){const n=await renomear(g.nome); if(n===null)return; g.nome=n||g.nome}
   else if(a==="delgrupo"){if(!await confirmar(`Excluir a categoria "${g.nome}" e tudo dentro dela?`))return; S.meses[S.atual].grupos=mes().grupos.filter(x=>x.id!==g.id)}
-  salvar();render();
+  salvar();render();fechamento();
 });
+
+/* fecha o mês sozinho quando tudo está pago; o mês antigo fica guardado como está */
+function toast(msg){
+  let t=document.getElementById("toast");
+  if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("role","status");document.body.appendChild(t)}
+  t.textContent=msg;t.style.opacity="1";
+  clearTimeout(toast._t);toast._t=setTimeout(()=>{t.style.opacity="0"},2600);
+}
+function fechamento(){
+  const m=mes(),itens=m.grupos.flatMap(g=>g.itens);
+  if(!itens.length)return;
+  if(itens.some(i=>!i.pago)){if(m.fechado){m.fechado=false;salvar()}return}
+  if(m.fechado)return;
+  m.fechado=true;salvar();
+  toast("Tudo pago em "+rotulo(S.atual)+" · abrindo o próximo mês");
+  setTimeout(proximoMes,1400);
+}
+
 /* confirm()/prompt() não funcionam no visualizador: usamos diálogos da própria página */
 function confirmar(msg){const el=document.createElement("dialog");el.innerHTML=`<form method="dialog" class="sheet glass"><p style="margin:0">${esc(msg)}</p><div class="acts"><button value="n">Cancelar</button><button value="s" class="btn-accent">Excluir</button></div></form>`;document.body.appendChild(el);el.showModal();return new Promise(r=>el.addEventListener("close",()=>{r(el.returnValue==="s");el.remove()}))}
 function renomear(atual){const el=document.createElement("dialog");el.innerHTML=`<form method="dialog" class="sheet glass"><div class="field"><label>Nome da categoria</label><input class="inp" id="rn" value="${esc(atual)}"></div><div class="acts"><button value="n">Cancelar</button><button value="s" class="btn-accent">Salvar</button></div></form>`;document.body.appendChild(el);el.showModal();el.querySelector("#rn").select();return new Promise(r=>el.addEventListener("close",()=>{r(el.returnValue==="s"?el.querySelector("#rn").value.trim():null);el.remove()}))}
 
 $("#salario").addEventListener("input",e=>{mes().salario=num(e.target.value);salvar();render()});
 $("#mesSel").addEventListener("change",e=>{S.atual=e.target.value;salvar();render()});
+function chaveAnterior(){
+  const [a,m]=S.atual.split("-").map(Number);
+  const pm=m===1?12:m-1, pa=m===1?a-1:a;
+  return `${pa}-${String(pm).padStart(2,"0")}`;
+}
+$("#mesAnterior").addEventListener("click",()=>{
+  const chave=chaveAnterior();
+  if(!S.meses[chave])return;
+  S.atual=chave;salvar();render();
+});
 $("#novoGrupo").addEventListener("click",async()=>{const n=await renomear("Nova categoria");if(n===null)return;mes().grupos.push({id:uid(),nome:n||"Nova categoria",itens:[]});salvar();render()});
 $("#temaBtn").addEventListener("click",()=>{
   const r=document.documentElement, escuro=matchMedia("(prefers-color-scheme: dark)").matches;
@@ -309,7 +358,8 @@ $("#temaBtn").addEventListener("click",()=>{
 });
 try{const t=localStorage.getItem(KEY+"-tema"); if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}
 
-$("#novoMes").addEventListener("click",()=>{
+$("#novoMes").addEventListener("click",proximoMes);
+function proximoMes(){
   const [a,m]=S.atual.split("-").map(Number);
   const nm=m===12?1:m+1, na=m===12?a+1:a;
   const chave=`${na}-${String(nm).padStart(2,"0")}`;
@@ -319,7 +369,7 @@ $("#novoMes").addEventListener("click",()=>{
         cur:i.tot?(i.cur||0)+1:null,tot:i.tot||null,pago:false}))}))};
   }
   S.atual=chave;salvar();render();
-});
+}
 render();
 </script>
 </body>
